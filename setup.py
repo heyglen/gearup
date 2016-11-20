@@ -11,6 +11,9 @@ with open('HISTORY.md') as history_file:
 
 requirements = [
     'invoke',
+    'pytest',
+    'requests',
+    'click',
     # TODO: put package requirements here
 ]
 
@@ -19,26 +22,22 @@ test_requirements = [
 ]
 
 setup(
-    name='gear',
+    name='gearup',
     version='0.1.0',
     description="Task automation",
     long_description=readme + '\n\n' + history,
     author="Glen Harmon",
-    # py_modules=[
-    #     'gear',
-    #     'gear.collections',
-    # ],
     author_email='ghar@nnit.com',
     packages=find_packages(exclude=['contrib', u'docs', u'tests']),
     entry_points={
         'console_scripts': [
-            'gear=gear.main:program.run'
+            'gearup = gearup.main:program.run',
         ]
     },
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
-    keywords='gear',
+    keywords='gearup',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
