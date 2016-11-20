@@ -14,6 +14,7 @@ from gearup.collections.http_collection import http_download, get_url_filename
 logger = logging.getLogger(__name__)
 
 no_init_error = 'fatal: Not a gitflow-enabled repo yet. Please run "git flow init" first.'
+exists_error = 'There is an existing release branch'
 
 
 @task(name='start')
@@ -23,6 +24,9 @@ def git_flow_release_start(ctx, version):
     response = ctx.run(command)
     if no_init_error in response.stderr:
         raise ValueError('Uninitialized. Run: \'git flow init\'')
+    if exists_error in response.stderr:
+        logger.debug('Release {} already exists'.format(version))
+        
 
 @task(name='finish')
 def git_flow_release_finish(ctx, version):
