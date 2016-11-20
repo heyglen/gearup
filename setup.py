@@ -14,6 +14,7 @@ requirements = [
     'pytest',
     'requests',
     'click',
+    'bumpversion',
     # TODO: put package requirements here
 ]
 
