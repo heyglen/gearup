@@ -14,9 +14,12 @@ requirements = [
     'pytest',
     'requests',
     'click',
+    'ijson',
     'livereload',
     'watchdog',
     'bumpversion',
+    'pandas',
+    'matplotlib',
     # TODO: put package requirements here
 ]
 

@@ -19,6 +19,7 @@ from gearup.collections import files as files_collection
 from gearup.collections import update as update_collection
 from gearup.collections import pip as pip_collection
 from gearup.collections import packages as packages_collection
+from gearup.collections import monitors as monitors_collection
 
 
 logger = logging.getLogger('gearup')
@@ -31,8 +32,7 @@ logger.addHandler(handler)
 
 @task()
 def env(ctx, default=True):
-    print 'hi'
-    print ctx
+    import ipdb; ipdb.set_trace()
 
 
 @task(autoprint=True)
@@ -57,6 +57,7 @@ namespace.add_collection(files_collection, name='file')
 namespace.add_collection(update_collection, name='update')
 namespace.add_collection(pip_collection, name='pip')
 namespace.add_collection(packages_collection, name='packages')
+namespace.add_collection(monitors_collection, name='monitors')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345
