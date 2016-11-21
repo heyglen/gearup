@@ -8,15 +8,17 @@ from invoke import Program, Collection, task, Argument
 
 from gearup.versions import Version
 
-from gearup.collections import scp_collection
-from gearup.collections import ssh_collection
-from gearup.collections import git_collection
-from gearup.collections import versions_collection
-from gearup.collections import pytest_collection
-from gearup.collections import http_collection
-from gearup.collections import file_collection
-from gearup.collections import update_collection
-from gearup.collections import git_flow_collection
+from gearup.collections import git as git_collection
+from gearup.collections import git_flow as git_flow_collection
+from gearup.collections import scp as scp_collection
+from gearup.collections import ssh as ssh_collection
+from gearup.collections import versions as versions_collection
+from gearup.collections import pytest as pytest_collection
+from gearup.collections import http as http_collection
+from gearup.collections import files as files_collection
+from gearup.collections import update as update_collection
+from gearup.collections import pip as pip_collection
+
 
 logger = logging.getLogger('gearup')
 logger.setLevel(logging.DEBUG)
@@ -50,8 +52,9 @@ namespace.add_collection(git_flow_collection, name='git_flow')
 namespace.add_collection(versions_collection, name='versions')
 namespace.add_collection(pytest_collection, name='test')
 namespace.add_collection(http_collection, name='http')
-namespace.add_collection(file_collection, name='file')
+namespace.add_collection(files_collection, name='file')
 namespace.add_collection(update_collection, name='update')
+namespace.add_collection(pip_collection, name='pip')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345
@@ -59,6 +62,7 @@ namespace.configure({
         'shell': os.environ.get('COMSPEC', os.environ.get('SHELL'))
     }
 })
+
 
 class MyProgram(Program):
     def core_args(self):
@@ -81,6 +85,6 @@ class MyProgram(Program):
 
 program = MyProgram(
     namespace=namespace,
-    binary='gearup',    
+    binary='gearup',
     version=Version.current(),
 )
