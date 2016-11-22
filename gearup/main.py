@@ -20,6 +20,8 @@ from gearup.collections import update as update_collection
 from gearup.collections import pip as pip_collection
 from gearup.collections import packages as packages_collection
 from gearup.collections import monitors as monitors_collection
+from gearup.collections import cisco as cisco_collection
+from gearup.collections.cisco import eox as cisco_eox_collection
 
 
 logger = logging.getLogger('gearup')
@@ -58,6 +60,9 @@ namespace.add_collection(update_collection, name='update')
 namespace.add_collection(pip_collection, name='pip')
 namespace.add_collection(packages_collection, name='packages')
 namespace.add_collection(monitors_collection, name='monitors')
+cisco_collection = Collection()
+namespace.add_collection(cisco_collection, name='cisco')
+cisco_collection.add_collection(cisco_eox_collection, name='eox')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345
