@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+
+"""
+
+Original code from Henry Ölsner
+https://github.com/hoelsner/product-database
+
+"""
+
 import datetime
 import json
 import logging
