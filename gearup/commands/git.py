@@ -15,6 +15,7 @@ class Git(object):
             files = [files]
         items = ' '.join(files)
         command = 'git add {}'.format(items)
+        command = command.replace('  ', ' ').strip()
         logger.debug(command)
         cli.run(command)
 

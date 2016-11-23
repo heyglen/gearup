@@ -21,7 +21,7 @@ class Pip(object):
             ))
 
     @classmethod
-    def download(cls, cli, download_path, package, source=False):
+    def download(cls, cli, package, download_path=None, source=False):
         cls.verify_package(package)
         if download_path is None:
             download_path = os.getcwd()
@@ -31,7 +31,7 @@ class Pip(object):
         if source:
             source_command = ' --no-binary :all: '
 
-        command = 'pip download {}  -d {} {}'.format(
+        command = 'pip download {} -d {} {}'.format(
             source_command,
             download_path,
             package,

@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 @task()
-def download(ctx, download_path, package):
-    return Pip.download(ctx, download_path, package)
+def download(ctx, package, download_path=None, source=False):
+    return Pip.download(ctx, package, download_path=download_path, source=source)
 
 
 @task()

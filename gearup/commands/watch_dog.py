@@ -4,6 +4,7 @@ import os
 import time
 import logging
 
+from gearup.commands.pip import Pip
 from watchdog.observers import Observer
 from watchdog.events import FileModifiedEvent, DirModifiedEvent
 
@@ -17,6 +18,7 @@ class WatchDog(object):
 
     @classmethod
     def modified(cls, file_name, callback, recursive=False, **kwargs):
+        Pip.upgrade('watchdog')
         event_handler = cls._get_handler(file_name, callback, **kwargs)
         message = 'Calling {}'.format(callback.__name__)
         if FileSystem.is_file(file_name):
