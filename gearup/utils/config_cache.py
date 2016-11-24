@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import operator
 import datetime
 import logging
 
@@ -18,7 +19,7 @@ class ConfigCache(object):
     def __init__(self, app):
         config = Config()
         try:
-            cache = getattr(getattr(config, app), self._cache_key_name)
+            cache = getattr(operator.attrgetter(app)(config), self._cache_key_name)
         except AttributeError:
             cache = Cache()
         self.cache = cache
