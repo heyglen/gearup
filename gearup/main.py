@@ -64,7 +64,7 @@ namespace.add_collection(monitors_collection, name='monitors')
 cisco_collection = Collection()
 namespace.add_collection(cisco_collection, name='cisco')
 cisco_collection.add_collection(cisco_eox_collection, name='eox')
-cisco_collection.add_collection(cisco_psirt_collection, name='psirt')
+cisco_collection.add_collection(cisco_psirt_collection, name='advisories')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345

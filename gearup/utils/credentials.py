@@ -21,10 +21,22 @@ class Credentials(object):
         self._config = Config()
 
     @property
+    def client_key(self):
+        return self.username
+
+    @property
+    def client_id(self):
+        return self.username
+
+    @property
+    def client_secret(self):
+        return self.password
+
+    @property
     def username(self):
         if self._username is None:
             try:
-                self._username = operator.attrgetter(self.app)(self._config).username
+                self._username = operator.attrgetter(self.app)(self._config).client_id
             except AttributeError:
                 logger.debug('{}.username not in configuration'.format(self.app))
                 self._username = click.prompt(
@@ -38,7 +50,7 @@ class Credentials(object):
     def password(self):
         if self._password is None:
             try:
-                password = operator.attrgetter(self.app)(self._config).password
+                password = operator.attrgetter(self.app)(self._config).client_secret
                 self._password = base64.b64decode(password).strip()
             except AttributeError:
                 logger.debug('{}.password not in configuration'.format(self.app))

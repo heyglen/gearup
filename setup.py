@@ -18,6 +18,7 @@ requirements = [
     'livereload',
     'watchdog',
     'oauth2',
+    'requests_oauthlib',
     'bumpversion',
     'pandas',
     'matplotlib',

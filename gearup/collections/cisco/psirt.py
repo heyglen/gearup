@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 @task
-def advisories(ctx, year=None):
-    for advisory in Psirt().get_advisories(year):
+def list(ctx, year=None, critical=None, high=None, medium=None, low=None):
+    for advisory in Psirt().list(year=year, critical=critical, high=high, medium=medium, low=low):
         click.echo(advisory)
+
+@task
+def get(ctx, identifier):
+	click.echo(Psirt().get(identifier))
