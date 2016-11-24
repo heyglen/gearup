@@ -17,6 +17,7 @@ requirements = [
     'ijson',
     'livereload',
     'watchdog',
+    'oauth2',
     'bumpversion',
     'pandas',
     'matplotlib',

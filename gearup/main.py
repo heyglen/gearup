@@ -22,6 +22,7 @@ from gearup.collections import packages as packages_collection
 from gearup.collections import monitors as monitors_collection
 from gearup.collections import cisco as cisco_collection
 from gearup.collections.cisco import eox as cisco_eox_collection
+from gearup.collections.cisco import psirt as cisco_psirt_collection
 
 
 logger = logging.getLogger('gearup')
@@ -63,6 +64,7 @@ namespace.add_collection(monitors_collection, name='monitors')
 cisco_collection = Collection()
 namespace.add_collection(cisco_collection, name='cisco')
 cisco_collection.add_collection(cisco_eox_collection, name='eox')
+cisco_collection.add_collection(cisco_psirt_collection, name='psirt')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345
