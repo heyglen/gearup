@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import json
 import logging
 from datetime import datetime
 
-import click
 import requests
 import oauth2 as oauth
-from invoke.config import Config
 
 from gearup.utils.credentials import Credentials
 
@@ -17,9 +14,11 @@ logger = logging.getLogger(__name__)
 class Psirt(object):
     """
         https://developer.cisco.com/site/PSIRT/get-started/getting-started.gsp
+        https://api.apis.guru/v2/specs/cisco.com/0.0.3/swagger.yaml
     """
     _advisory_standard = u'cvrf'  # 'oval'
-    _token_url = u'https://cloudsso.cisco.com/as/token.oauth2?grant_type=client_credentials&client_id={}&client_secret={}'
+    _token_url = u'https://cloudsso.cisco.com/as/token.oauth2?' \
+                 u'grant_type=client_credentials&client_id={}&client_secret={}'
     _base_url = u'http://api.cisco.com/security/advisories'
 
     def __init__(self):
@@ -36,7 +35,7 @@ class Psirt(object):
             access_token = self._get_access_token()
             self._headers = {
                 'Accept': u'application/json',
-                'Authorization' : u'Bearer {}'.format(access_token)
+                'Authorization': u'Bearer {}'.format(access_token)
             }
         return self._headers
 
@@ -45,9 +44,9 @@ class Psirt(object):
             logger.debug('Authenticating')
             username = self._credentials.username
             password = self._credentials.password
-            consumer = oauth.Consumer(key=username,secret=password)
+            consumer = oauth.Consumer(key=username, secret=password)
             request_token_url = self._token_url.format(username, password)
-            client = oauth.Client(consumer)
+            oauth.Client(consumer)
 
             response = self._session.post(request_token_url)
             logger.debug(response.text)
@@ -57,7 +56,7 @@ class Psirt(object):
         return self._access_token
 
     def _get(self, url):
-        # Replace the Request URL below with the openVuln REST API resource you would like to access.
+        # Replace the Request URL below with the openVuln REST API resource you would like to access
         # In this example, we are getting all advisories in CVRF format
         # The available resources are documented at:
         # https://developer.cisco.com/site/PSIRT/get-started/getting-started.gsp
@@ -72,7 +71,7 @@ class Psirt(object):
             logger.debug('Getting CVE advisory {}'.format(item))
             url = self._build_url(u'cve/{}'.format(item))
             advisory = self._get(url).get('advisories')
-        else:            
+        else:
             logger.debug('Getting advisory client_id {}'.format(item))
             url = self._build_url(u'advisory/{}'.format(item))
             advisory = self._get(url).get('advisories')
