@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import cPickle as pickle
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -17,8 +18,10 @@ config = Config()
 
 
 class Cache(object):
+    record_id_attribute = 'record_id'
     timestamp_attribute = 'cache_timestamp'
     cache_config_path = 'cache.document.db.mongodb'
+    default_cache_timeout_hours = 168
 
     def __init__(self, fn):
         self.fn = fn
@@ -32,16 +35,36 @@ class Cache(object):
         self.database = client[module_db]
         logger.debug('Loaded cache db: {}'.format(module_db))
 
+    def get_cache_expire(self):
         timeout = self.get_configuration('cache.document.db', 'timeout')
-        timeout = (timeout or 168) * -1  # In hours, one week default
-        self.cache_expired = datetime.utcnow() - timedelta(hours=timeout)
+        timeout = (timeout or self.default_cache_timeout_hours) * -1  # In hours, one week default
+        return datetime.utcnow() - timedelta(hours=timeout)
+
+    def get_database(self):
+        return self.database[self.fn.func_name]
+
+    def get_record_id(self, *args, **kwargs):
+        return hash(pickle.dumps((args, kwargs)))
+
+    def purge_all(self):
+        cache = self.get_database()
+        result = cache.delete_many({})
+        logger.debug('Purged {} documents'.format(result.deleted_count))
+
+    def purge_expired(self):
+        cache = self.get_database()
+        result = cache.delete_many({
+            self.timestamp_attribute: {'$lt': self.get_cache_expire()}
+        })
+        logger.debug('Purged {} expired documents'.format(result.deleted_count))
 
     def get(self, *args, **kwargs):
         results = None
-        cache = self.database[self.fn.func_name]
+        cache = self.get_database()
         search = {
-            self.timestamp_attribute: {'$gt': self.cache_expired}
-        }.update(kwargs)
+            self.record_id_attribute: self.get_record_id(*args, **kwargs),
+            self.timestamp_attribute: {'$gt': self.get_cache_expire()}
+        }
         result_set = cache.find(search)
         result_count = result_set.count()
         if result_count:
@@ -50,19 +73,17 @@ class Cache(object):
                 self.fn.func_name,
                 result_count
             ))
-            results = [r for r in result_set]
+            results = pickle.loads(result_set.value)
         return results
 
-    def update(self, results):
-        cache = self.database[self.fn.func_name]
-        if isinstance(results, dict):
-            results = [results]
-        if isinstance(results, list) and all([isinstance(i, dict) for i in results]):
-            now = datetime.utcnow()
-            for item in results:
-                item[self.timestamp_attribute] = now
-            logger.debug('Updating cache with {} documents'.format(len(results)))
-            cache.insert(results)
+    def update(self, value, *args, **kwargs):
+        cache = self.get_database()
+        cache.insert({
+            self.record_id_attribute: self.get_record_id(*args, **kwargs),
+            'value': pickle.dumps(value),
+            self.timestamp_attribute: datetime.utcnow(),
+        })
+        logger.debug('Cache updated')
 
     @classmethod
     def get_method_module(cls, fn):
@@ -86,6 +107,7 @@ def document_cache(fn):
         if cached_results:
             return cached_results
         output = fn(*args, **kwargs)
+        cache.purge_expired()
         cache.update(output)
         return output
     return update_wrapper(decorator, fn)

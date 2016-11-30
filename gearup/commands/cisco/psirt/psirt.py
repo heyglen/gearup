@@ -7,6 +7,7 @@ import requests
 import oauth2 as oauth
 
 from gearup.utils.credentials import Credentials
+from gearup.utils.document_cache import document_cache
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,10 @@ class Psirt(object):
 
         headers = self._get_headers()
         response = self._session.get(url, headers=headers)
+        import ipdb; ipdb.set_trace()
         return response.json()
 
+    @document_cache
     def get(self, item):
         advisory = None
         if item.startswith('CVE'):
@@ -77,6 +80,7 @@ class Psirt(object):
             advisory = self._get(url).get('advisories')
         return advisory
 
+    @document_cache
     def list(self, year=None, critical=None, high=None, medium=None, low=None):
         advisories = list()
         levels = {

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import logging
-import platform
-from StringIO import StringIO 
+from StringIO import StringIO
 
 import click
 import ijson
 import requests
-import pandas as pd
+import pandas as pnd
 # import matplotlib
 
+from gearup.utils.credentials import Credentials
+from gearup.utils.document_cache import document_cache
 
 # matplotlib.style.use('ggplot')
 
@@ -23,6 +23,13 @@ class UpTimeRobot(object):
     _methods = {
         'get': 'getMonitors',
     }
+    _credentials = None
+
+    @classmethod
+    def _get_credentials(cls, cli=None):
+        if cls._credentials is None:
+            cls._credentials = Credentials(u'uptimerobot.api')
+        return cls._credentials
 
     @classmethod
     def _get_response_json(cls, response):
@@ -30,15 +37,10 @@ class UpTimeRobot(object):
         data = StringIO(data)
         return data
 
-
-    @classmethod
-    def _get_api_key(cls, cli):
-        return cli.config.monitoring.sources.uptimerobot.apikey.main
-
     @classmethod
     def _get_params(cls, cli, monitor_id=None):
         params = {
-            'apiKey': cls._get_api_key(cli),
+            'apiKey': cls._get_credentials(cli).client_secret,
             'responseTimes': 1,
             'showTimezone': 1,
             'format': 'json',
@@ -49,19 +51,24 @@ class UpTimeRobot(object):
         return params
 
     @classmethod
-    def _get_responses(cls, cli, monitor_id):
+    @document_cache
+    def _get_raw_response(cls, monitor_id, cli=None):
         params = cls._get_params(cli, monitor_id)
         response = requests.get(
             '{}/{}'.format(cls._url, cls._methods.get('get')),
             params=params,
         )
+        return response
+
+    @classmethod
+    def _get_response(cls, monitor_id, cli=None):
+        response = cls._get_raw_response(monitor_id, cli=cli)
         data = cls._get_response_json(response)
         for response in ijson.items(data, 'monitors.monitor.item.responsetime.item'):
             yield response
 
-
     @classmethod
-    def list(cls, cli):
+    def list(cls, cli=None):
         for monitor in cls._list_monitors(cli):
             # import ipdb; ipdb.set_trace()
             click.echo('{}: {}'.format(
@@ -70,7 +77,8 @@ class UpTimeRobot(object):
             ))
 
     @classmethod
-    def _list_monitors(cls, cli):
+    @document_cache
+    def _list_monitors(cls, cli=None):
         url = '{}/{}'.format(cls._url, cls._methods.get('get'))
         params = cls._get_params(cli)
         response = requests.get(
@@ -80,19 +88,29 @@ class UpTimeRobot(object):
         data = cls._get_response_json(response)
         monitors = list()
         for monitor in ijson.items(data, 'monitors.monitor.item'):
-            yield monitor
-
+            monitors.append(monitor)
+        return monitors
 
     @classmethod
-    def _get_monitor_id(cls, cli, monitor):
+    def _get_monitor_id(cls, monitor, cli=None):
+        result = None
         for monitor_object in cls._list_monitors(cli):
             if monitor_object.get('friendlyname') == monitor:
-                return monitor_object.get('id')         
+                result = monitor_object.get('id')
+                break
+            elif monitor_object.get('id') == monitor:
+                result = monitor_object.get('id')
+                break
+        return result
 
     @classmethod
-    def graph(cls, cli, monitor):
-        monitor_id = cls._get_monitor_id(cli, monitor)
-        for response in cls._get_responses(cli, monitor_id):
+    def _graph(cls, monitor, cli=None):
+        monitor_id = cls._get_monitor_id(monitor, cli=cli)
+        return cls._get_raw_response(monitor_id, cli=cli)
+
+    @classmethod
+    def graph(cls, monitor, cli=None):
+        for response in cls._get_response(monitor, cli=cli):
             click.echo('{}: {}'.format(
                 response.get('datetime'),
                 response.get('value'),
