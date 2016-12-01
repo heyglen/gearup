@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
+import ijson
 import logging
 from StringIO import StringIO
 
 import click
-import ijson
 import requests
 import pandas as pnd
-# import matplotlib
+import matplotlib.pyplot as plt
+
 
 from gearup.utils.credentials import Credentials
 from gearup.utils.document_cache import document_cache
 
-# matplotlib.style.use('ggplot')
+plt.style.use('fivethirtyeight')
 
 
 logger = logging.getLogger(__name__)
@@ -32,10 +33,8 @@ class UpTimeRobot(object):
         return cls._credentials
 
     @classmethod
-    def _get_response_json(cls, response):
-        data = response.text.replace(u'jsonUptimeRobotApi(', u'').rstrip(u')')
-        data = StringIO(data)
-        return data
+    def _clean_response_data(cls, data):
+        return data.replace(u'jsonUptimeRobotApi(', u'').rstrip(u')')
 
     @classmethod
     def _get_params(cls, cli, monitor_id=None):
@@ -51,21 +50,13 @@ class UpTimeRobot(object):
         return params
 
     @classmethod
-    @document_cache
-    def _get_raw_response(cls, monitor_id, cli=None):
+    def _get_response(cls, monitor_id, cli=None):
         params = cls._get_params(cli, monitor_id)
         response = requests.get(
             '{}/{}'.format(cls._url, cls._methods.get('get')),
             params=params,
         )
         return response
-
-    @classmethod
-    def _get_response(cls, monitor_id, cli=None):
-        response = cls._get_raw_response(monitor_id, cli=cli)
-        data = cls._get_response_json(response)
-        for response in ijson.items(data, 'monitors.monitor.item.responsetime.item'):
-            yield response
 
     @classmethod
     def list(cls, cli=None):
@@ -85,7 +76,8 @@ class UpTimeRobot(object):
             url,
             params=params,
         )
-        data = cls._get_response_json(response)
+        data = cls._clean_response_data(response.text)
+        data = StringIO(data)
         monitors = list()
         for monitor in ijson.items(data, 'monitors.monitor.item'):
             monitors.append(monitor)
@@ -104,14 +96,31 @@ class UpTimeRobot(object):
         return result
 
     @classmethod
-    def _graph(cls, monitor, cli=None):
+    def _graph(cls, monitor, cli=None, file_name=None):
         monitor_id = cls._get_monitor_id(monitor, cli=cli)
-        return cls._get_raw_response(monitor_id, cli=cli)
+        response = cls._get_response(monitor_id, cli=cli)
+        data = cls._clean_response_data(response.text)
+        data = StringIO(data)        
+
+        dates = list()
+        values = list()
+        for measure in ijson.items(data, 'monitors.monitor.item.responsetime.item'):
+            dates.append(measure.get('datetime'))
+            values.append(int(measure.get('value')))
+
+        index = pnd.to_datetime(dates, dayfirst=False)
+        series = pnd.Series(values, index=index)
+        ax = series.plot()
+        ax.set_title('Response Time')
+        ax.set_xlabel('Time')
+        fig = ax.get_figure()
+        if file_name is None:
+            fig.show()
+            plt.show()  # Wait for exit
+        else:
+            fig.savefig('{}.png'.format(file_name))
+        return series
 
     @classmethod
-    def graph(cls, monitor, cli=None):
-        for response in cls._get_response(monitor, cli=cli):
-            click.echo('{}: {}'.format(
-                response.get('datetime'),
-                response.get('value'),
-            ))
+    def graph(cls, monitor, cli=None, file_name=None):
+        return cls._graph(monitor, cli=cli, file_name=file_name)

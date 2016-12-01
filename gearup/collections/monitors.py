@@ -20,4 +20,4 @@ def _list(ctx):
 
 @task
 def graph(ctx, friendly_name):
-    return UpTimeRobot.graph(ctx, friendly_name)
+    return UpTimeRobot.graph(friendly_name, ctx)
