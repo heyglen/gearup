@@ -85,22 +85,21 @@ class UpTimeRobot(object):
 
     @classmethod
     def _get_monitor_id(cls, monitor, cli=None):
-        result = None
+        monitor_id = None
+        friendly_name = None
         for monitor_object in cls._list_monitors(cli):
-            if monitor_object.get('friendlyname') == monitor:
-                result = monitor_object.get('id')
+            if monitor_object.get('friendlyname') == monitor or monitor_object.get('id') == monitor:
+                monitor_id = monitor_object.get('id')
+                friendly_name = monitor_object.get('friendlyname')
                 break
-            elif monitor_object.get('id') == monitor:
-                result = monitor_object.get('id')
-                break
-        return result
+        return monitor_id, friendly_name
 
     @classmethod
     def _graph(cls, monitor, cli=None, file_name=None):
-        monitor_id = cls._get_monitor_id(monitor, cli=cli)
+        monitor_id, friendlyname = cls._get_monitor_id(monitor, cli=cli)
         response = cls._get_response(monitor_id, cli=cli)
         data = cls._clean_response_data(response.text)
-        data = StringIO(data)        
+        data = StringIO(data)
 
         dates = list()
         values = list()
@@ -111,7 +110,7 @@ class UpTimeRobot(object):
         index = pnd.to_datetime(dates, dayfirst=False)
         series = pnd.Series(values, index=index)
         ax = series.plot()
-        ax.set_title('Response Time')
+        ax.set_title('Response Time: {}'.format(friendlyname))
         ax.set_xlabel('Time')
         fig = ax.get_figure()
         if file_name is None:
