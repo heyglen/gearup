@@ -34,7 +34,7 @@ def patch(ctx, deploy=False):
 
 
 def version_bump(ctx, version_bump_type, version, deploy):
-    if not Git.is_dirty(ctx):
+    if Git.is_dirty(ctx):
         logger.debug('Version bump skipped, working directory is clean')
         return Version.current()
     Version.validate(version)

@@ -105,6 +105,7 @@ class Cache(object):
 def document_cache(fn):
     """ Document Cache """
     cache = Cache(fn)
+
     def decorator(*args, **kwargs):
         result_returned, cached_result = cache.get(*args, **kwargs)
         if result_returned:

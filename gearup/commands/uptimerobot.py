@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 
 from gearup.utils.credentials import Credentials
-from gearup.utils.document_cache import document_cache
 
 plt.style.use('fivethirtyeight')
 
@@ -68,7 +67,6 @@ class UpTimeRobot(object):
             ))
 
     @classmethod
-    @document_cache
     def _list_monitors(cls, cli=None):
         url = '{}/{}'.format(cls._url, cls._methods.get('get'))
         params = cls._get_params(cli)
