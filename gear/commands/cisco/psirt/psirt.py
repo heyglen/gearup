@@ -6,9 +6,6 @@ from datetime import datetime
 import requests
 import oauth2 as oauth
 
-from gear.utils.credentials import Credentials
-from gear.utils.document_cache import document_cache
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +20,6 @@ class Psirt(object):
     _base_url = u'http://api.cisco.com/security/advisories'
 
     def __init__(self):
-        self._credentials = Credentials(u'cisco.api.psirt')
         self._session = requests.Session()
 
     def _build_url(self, suffix):
@@ -43,8 +39,8 @@ class Psirt(object):
     def _get_access_token(self):
         if not hasattr(self, '_access_token'):
             logger.debug('Authenticating')
-            username = self._credentials.username
-            password = self._credentials.password
+            username = configuration.cisco.psirt.username
+            password = configuration.cisco.psirt.password
             consumer = oauth.Consumer(key=username, secret=password)
             request_token_url = self._token_url.format(username, password)
             oauth.Client(consumer)
@@ -67,7 +63,6 @@ class Psirt(object):
         import ipdb; ipdb.set_trace()
         return response.json()
 
-    @document_cache
     def get(self, item):
         advisory = None
         if item.startswith('CVE'):
@@ -80,8 +75,7 @@ class Psirt(object):
             advisory = self._get(url).get('advisories')
         return advisory
 
-    @document_cache
-    def issues(self, year=None, critical=None, high=None, medium=None, low=None):
+    def list(self, year=None, critical=None, high=None, medium=None, low=None):
         advisories = list()
         levels = {
             'critical': critical,

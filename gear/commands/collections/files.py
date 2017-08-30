@@ -4,9 +4,9 @@ import logging
 
 from invoke import task
 
-from gearup.commands.watch_dog import WatchDog
-from gearup.commands.file_system import FileSystem
-from gearup.commands.operating_system import OperatingSystem
+from gear.commands.watch_dog import WatchDog
+from gear.commands.file_system import FileSystem
+from gear.commands.operating_system import OperatingSystem
 
 
 logger = logging.getLogger(__name__)

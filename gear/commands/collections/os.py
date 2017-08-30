@@ -4,7 +4,7 @@ import logging
 
 from invoke import task
 
-from gearup.commands.operating_system import OperatingSystem
+from gear.commands.operating_system import OperatingSystem
 
 
 logger = logging.getLogger(__name__)

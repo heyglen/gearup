@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 
 Original code from Henry Ölsner
@@ -15,11 +13,8 @@ import requests
 from invoke.config import Config
 
 from gear.commands.cisco.eox.exceptions import *
-from gear.utils.config_cache import ConfigCache
 
 logger = logging.getLogger(__name__)
-
-cache = ConfigCache('cisco.eox')
 
 
 class BaseCiscoApiConsole:
@@ -53,19 +48,13 @@ class BaseCiscoApiConsole:
         temp_auth_token['http_auth_header'] = self.http_auth_header
         temp_auth_token['expire_datetime'] = self.token_expire_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
 
-        cache.set(
-            self.AUTH_TOKEN_CACHE_KEY,
-            json.dumps(temp_auth_token),
-            timeout=timeout_seconds
-        )
-
         logger.debug("temporary token saved")
 
     def __load_cached_temp_token__(self):
         logger.debug("load cached temp token")
 
         try:
-            cached_auth_token = cache.get(self.AUTH_TOKEN_CACHE_KEY)
+            cached_auth_token = None
             if not cached_auth_token:
                 self.drop_cached_token()        # clean instance
                 return False
@@ -150,7 +139,6 @@ class BaseCiscoApiConsole:
                     logger.error("unexpected response from API endpoint (malformed JSON content)")
                     raise CiscoApiCallFailed("unexpected content from API endpoint")
 
-                cache.delete(self.AUTH_TOKEN_CACHE_KEY)
                 self.current_access_token = jdata
 
                 # set expire date
@@ -168,7 +156,6 @@ class BaseCiscoApiConsole:
                 self.__save_cached_temp_token__(self.current_access_token['expires_in'])
 
     def drop_cached_token(self):
-        cache.delete(self.AUTH_TOKEN_CACHE_KEY)
         self.current_access_token = None
         self.http_auth_header = None
         self.token_expire_datetime = None

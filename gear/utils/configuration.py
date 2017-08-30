@@ -14,6 +14,15 @@ class DotDict(dict):
         return DotDict(val) if type(val) is dict else val
 
 configuration = DotDict({
+    'cisco': {
+        'psirt' :{
+            'username': '',
+            'password': '',
+        },
+        'eox' :{
+
+        },
+    },
     'uptimerobot': {
         'api': {
             'client_id': '',

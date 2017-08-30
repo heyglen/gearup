@@ -4,7 +4,7 @@ import logging
 
 from invoke import task
 
-from gearup.commands.pip import Pip
+from gear.commands.pip import Pip
 
 
 logger = logging.getLogger(__name__)

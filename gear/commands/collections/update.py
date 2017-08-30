@@ -4,7 +4,7 @@ import logging
 
 from invoke import task
 
-from gearup.commands.collections import git_flow
+from gear.commands.collections import git_flow
 
 
 logger = logging.getLogger(__name__)

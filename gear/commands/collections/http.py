@@ -4,7 +4,7 @@ import logging
 
 from invoke import task
 
-from gearup.commands.http import Http
+from gear.commands.http import Http
 
 
 logger = logging.getLogger(__name__)

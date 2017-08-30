@@ -4,8 +4,7 @@ import logging
 
 from invoke import task
 
-from gearup.commands.git import Git
-
+from gear.commands.git import Git
 
 logger = logging.getLogger(__name__)
 

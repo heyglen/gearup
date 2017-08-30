@@ -9,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 class Version(object):
     valid_version = re.compile(r'^\d+\.\d+\.\d+$')
-    _setup_file = 'setup.cfg'
-    version_controlled = os.path.isfile(_setup_file)
 
     @classmethod
     def current(cls):

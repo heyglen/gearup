@@ -12,8 +12,8 @@ import requests
 import pandas as pnd
 import matplotlib.pyplot as plt
 
-from gearup.utils.credentials import Credentials
-from gearup.utils.configuration import configuration
+
+from gear.utils.configuration import configuration
 
 plt.style.use('fivethirtyeight')
 
@@ -54,12 +54,13 @@ class UpTimeRobot(object):
         return response
 
     @classmethod
-    def monitors(cls, cli=None):
+    def list(cls, cli=None):
         for monitor in cls._list_monitors(cli):
             # import ipdb; ipdb.set_trace()
-            friendly_name = monitor.get('friendlyname')
-            monitor_id = monitor.get('id')
-            logger.info(f'{friendly_name} id:{monitor_id}')
+            click.echo('{}'.format(
+                monitor.get('friendlyname'),
+                # monitor.get('id'),
+            ))
 
     @classmethod
     def _list_monitors(cls, cli=None):

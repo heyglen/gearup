@@ -5,9 +5,9 @@ import logging
 
 from invoke import task
 
-from gearup.commands.http import Http
-from gearup.commands.file_system import FileSystem
-from gearup.commands.packages import Packages
+from gear.commands.http import Http
+from gear.commands.file_system import FileSystem
+from gear.commands.packages import Packages
 
 
 logger = logging.getLogger(__name__)
