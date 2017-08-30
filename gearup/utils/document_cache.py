@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-import cPickle as pickle
+import pickle
 from datetime import datetime
 from datetime import timedelta
 import logging

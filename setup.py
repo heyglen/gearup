@@ -22,7 +22,10 @@ requirements = [
     'requests_oauthlib',
     'bumpversion',
     'pandas',
+    'colorlog',
     'matplotlib',
+    'PyYAML',
+    'notify2',
     # TODO: put package requirements here
 ]
 

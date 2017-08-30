@@ -81,7 +81,7 @@ class Psirt(object):
         return advisory
 
     @document_cache
-    def list(self, year=None, critical=None, high=None, medium=None, low=None):
+    def issues(self, year=None, critical=None, high=None, medium=None, low=None):
         advisories = list()
         levels = {
             'critical': critical,

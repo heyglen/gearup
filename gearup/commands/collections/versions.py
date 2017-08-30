@@ -6,15 +6,15 @@ from invoke import task
 
 from gearup.versions import Version
 from gearup.commands.git import Git
-from gearup.collections.git_flow import git_flow_release_start, git_flow_release_finish
+from gearup.commands.collections.git_flow import git_flow_release_start, git_flow_release_finish
 
 logger = logging.getLogger(__name__)
 
 
-@task
+@task(default=True)
 def current(ctx):
     current = Version.current()
-    print current
+    logger.info(current)
     return current
 
 

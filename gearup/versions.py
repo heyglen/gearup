@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import os
 import re
 import logging
-import ConfigParser
+import pathlib
+import configparser
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +13,14 @@ class Version(object):
     @classmethod
     def current(cls):
         version = 'unknown'
-        setup_file = 'setup.cfg'
-        if os.path.isfile(setup_file):
-            logger.debug('Returning version from {}'.format(os.path.abspath(setup_file)))
-            config = ConfigParser.RawConfigParser()
-            config.read(setup_file)
+        setup_cfg = pathlib.Path() / 'setup.cfg'
+        if setup_cfg.is_file():
+            logger.debug(f'Returning version from {setup_cfg.name}')
+            config = configparser.ConfigParser()
+            config.read(setup_cfg)
             version = config.get('bumpversion', 'current_version')
         else:
-            logger.debug("Returning {}'s version".format(__name__))
+            logger.debug(f"Returning {__name__}'s version")
 
         return version
 
@@ -77,5 +76,5 @@ class Version(object):
         if cls.valid_version.match(version):
             valid = True
         elif raise_exception:
-            raise ValueError('Invalid version "{}"'.format(version))
+            raise ValueError(f'Invalid version "{version}"')
         return valid

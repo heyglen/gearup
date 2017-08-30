@@ -2,16 +2,16 @@
 
 import ijson
 import logging
-from StringIO import StringIO
+from io import StringIO
 
 import click
 import requests
 import pandas as pnd
 import matplotlib.pyplot as plt
 
-
 from gearup.utils.credentials import Credentials
 from gearup.utils.document_cache import document_cache
+from gearup.utils.configuration import configuration
 
 plt.style.use('fivethirtyeight')
 
@@ -24,13 +24,6 @@ class UpTimeRobot(object):
     _methods = {
         'get': 'getMonitors',
     }
-    _credentials = None
-
-    @classmethod
-    def _get_credentials(cls, cli=None):
-        if cls._credentials is None:
-            cls._credentials = Credentials(u'uptimerobot.api')
-        return cls._credentials
 
     @classmethod
     def _clean_response_data(cls, data):
@@ -39,7 +32,7 @@ class UpTimeRobot(object):
     @classmethod
     def _get_params(cls, cli, monitor_id=None):
         params = {
-            'apiKey': cls._get_credentials(cli).client_secret,
+            'apiKey': configuration.uptimerobot.api.key,
             'responseTimes': 1,
             'showTimezone': 1,
             'format': 'json',
@@ -59,16 +52,15 @@ class UpTimeRobot(object):
         return response
 
     @classmethod
-    def list(cls, cli=None):
+    def monitors(cls, cli=None):
         for monitor in cls._list_monitors(cli):
             # import ipdb; ipdb.set_trace()
-            click.echo('{}: {}'.format(
-                monitor.get('friendlyname'),
-                monitor.get('id'),
-            ))
+            friendly_name = monitor.get('friendlyname')
+            monitor_id = monitor.get('id')
+            logger.info(f'{friendly_name} id:{monitor_id}')
 
     @classmethod
-    @document_cache
+    # @document_cache
     def _list_monitors(cls, cli=None):
         url = '{}/{}'.format(cls._url, cls._methods.get('get'))
         params = cls._get_params(cli)
@@ -100,7 +92,7 @@ class UpTimeRobot(object):
         monitor_id = cls._get_monitor_id(monitor, cli=cli)
         response = cls._get_response(monitor_id, cli=cli)
         data = cls._clean_response_data(response.text)
-        data = StringIO(data)        
+        data = StringIO(data)
 
         dates = list()
         values = list()

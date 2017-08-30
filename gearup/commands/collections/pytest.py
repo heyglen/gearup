@@ -8,7 +8,7 @@ from invoke import task
 logger = logging.getLogger(__name__)
 
 
-@task(name='all')
+@task(name='all', default=True)
 def all(ctx):
     pytest.main('')
 
@@ -20,4 +20,4 @@ def unit(ctx):
 
 @task(name='integration')
 def integration(ctx):
-    pytest.main('tests/unit')
+    pytest.main('tests/integration')

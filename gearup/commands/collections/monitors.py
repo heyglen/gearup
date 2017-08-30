@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 @task(name='list', default=True)
-def _list(ctx):
-    return UpTimeRobot.list(ctx)
+def graphs(ctx):
+    return UpTimeRobot.monitors(ctx)
 
 
-@task
+@task(name='get')
 def graph(ctx, friendly_name):
     return UpTimeRobot.graph(friendly_name, ctx)
