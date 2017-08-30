@@ -4,11 +4,11 @@ import os
 import time
 import logging
 
-from gearup.commands.pip import Pip
+from gear.commands.pip import Pip
 from watchdog.observers import Observer
 from watchdog.events import FileModifiedEvent, DirModifiedEvent
 
-from gearup.commands.file_system import FileSystem
+from gear.commands.file_system import FileSystem
 
 
 logger = logging.getLogger(__name__)

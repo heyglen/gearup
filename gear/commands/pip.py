@@ -5,7 +5,7 @@ import os
 import logging
 
 
-from gearup.commands.file_system import FileSystem
+from gear.commands.file_system import FileSystem
 
 
 logger = logging.getLogger(__name__)

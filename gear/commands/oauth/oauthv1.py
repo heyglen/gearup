@@ -10,7 +10,7 @@ import oauth2 as oauth
 from invoke.config import Config
 from requests_oauthlib import OAuth1Session
 
-from gearup.utils.credentials import Credentials
+from gear.utils.credentials import Credentials
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class Oauthv1(object):
             resource_owner_key=self._resource_owner_key,
             resource_owner_secret=self._access_token,
         )
-        return session.get(url)        
+        return session.get(url)
 
     def _oauth_process(self):
         if not hasattr(self, '_access_token'):
@@ -48,8 +48,8 @@ class Oauthv1(object):
             client_key = self._credentials.client_key
             client_secret = self._credentials.client_secret
             self._session = OAuth1Session(client_key, client_secret=client_secret)
-        return self._session        
-            
+        return self._session
+
     def _get_request_token(self):
         logger.debug('Getting request token')
         request_token_url = self._request_token_url
@@ -64,7 +64,7 @@ class Oauthv1(object):
         authorization_url = oauth_session.authorization_url(self._authorization_url)
         response = oauth.parse_authorization_response(self._autorization_redirect_url)
         self._verification = response.get('oauth_verifier')
-        
+
     def _get_access_token(self):
         session = OAuth1Session(
             self._credentials.client_key,

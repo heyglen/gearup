@@ -6,8 +6,8 @@ from datetime import datetime
 import requests
 import oauth2 as oauth
 
-from gearup.utils.credentials import Credentials
-from gearup.utils.document_cache import document_cache
+from gear.utils.credentials import Credentials
+from gear.utils.document_cache import document_cache
 
 logger = logging.getLogger(__name__)
 

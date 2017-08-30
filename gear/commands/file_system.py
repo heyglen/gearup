@@ -5,7 +5,7 @@ import logging
 import shutil
 
 
-from gearup.commands.operating_system import OperatingSystem
+from gear.commands.operating_system import OperatingSystem
 
 
 logger = logging.getLogger(__name__)
@@ -27,10 +27,12 @@ class FileSystem(object):
     def _file_chomod(cls, ctx, file_name, permission, group='u', raise_exception=True):
         operating_system = OperatingSystem.name()
         if operating_system == 'windows':
-            message = 'Unsupported platform {}'.format(operating_system)
-            logger.error('Unsupported platform {}'.format(operating_system))
-            if raise_exception:
-                raise SystemError(message)
+            message = 'Skipping credentials modification on unsupported platform {}'.format(
+                operating_system
+            )
+            logger.error(message)
+            # if raise_exception:
+            #     raise SystemError(message)
         else:
             return cls._linux_set_permission(ctx, file_name, permission, group)
 

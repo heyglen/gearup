@@ -8,8 +8,8 @@ import click
 import requests
 from livereload import Server
 
-from gearup.commands.pip import Pip
-from gearup.commands.file_system import FileSystem
+from gear.commands.pip import Pip
+from gear.commands.file_system import FileSystem
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def hidden_progress_bar(*args, **kwargs):
 class Http(object):
 
     @classmethod
-    def http_download(cls, cli, url, download_path=None, show_progress=True):
+    def download(cls, cli, url, download_path=None, show_progress=True):
         Pip.install(cli, 'requests')
         if download_path is None:
             download_path = os.getcwd()

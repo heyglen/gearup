@@ -14,8 +14,8 @@ import logging
 import requests
 from invoke.config import Config
 
-from gearup.commands.cisco.eox.exceptions import *
-from gearup.utils.config_cache import ConfigCache
+from gear.commands.cisco.eox.exceptions import *
+from gear.utils.config_cache import ConfigCache
 
 logger = logging.getLogger(__name__)
 

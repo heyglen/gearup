@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from gearup.commands.document_cache import document_cache
+from gear.commands.document_cache import document_cache
 
 
 class TestApi(object):

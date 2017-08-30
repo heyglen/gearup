@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from gearup.commands.operating_system import OperatingSystem
+from gear.commands.operating_system import OperatingSystem
 
 
 class Packages(object):

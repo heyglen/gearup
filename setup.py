@@ -34,7 +34,7 @@ test_requirements = [
 ]
 
 setup(
-    name='gearup',
+    name='gear',
     version='0.1.0',
     description="Task automation",
     long_description=readme + '\n\n' + history,
@@ -43,13 +43,13 @@ setup(
     packages=find_packages(exclude=['contrib', u'docs', u'tests']),
     entry_points={
         'console_scripts': [
-            'gear = gearup.main:program.run',
+            'gear = gear.main:program.run',
         ]
     },
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
-    keywords='gearup',
+    keywords='gear',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

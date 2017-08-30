@@ -8,8 +8,8 @@ import click
 import requests
 from invoke.config import Config
 
-from gearup.commands.oauth.oauthv1 import Oauthv1
-# from gearup.commands.oauth.oauthv2 import Oauthv2
+from gear.commands.oauth.oauthv1 import Oauthv1
+# from gear.commands.oauth.oauthv2 import Oauthv2
 
 logger = logging.getLogger(__name__)
 
