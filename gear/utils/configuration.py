@@ -74,27 +74,27 @@ def clean_config(config):
     return new_dict
 
 
-environment_configuration = {
-    'cisco': {
-        'psirt' :{
-            'username': _get_env('GEAR_CISCO_PSIRT_USERNAME'),
-            'password': _get_env('GEAR_CISCO_PSIRT_PASSWORD', decode=True),
-        },
-        'eox' :{
-            'username': _get_env('GEAR_CISCO_EOX_USERNAME'),
-            'password': _get_env('GEAR_CISCO_EOX_PASSWORD', decode=True),
-        },
-    },
-    'uptimerobot': {
-        'api': {
-            'client_id': _get_env('GEAR_UPTIMEROBOT_USERNAME'),
-            'key': _get_env('GEAR_UPTIMEROBOT_KEY', decode=True),
-        }
-    }
-}
+# environment_configuration = {
+#     'cisco': {
+#         'psirt' :{
+#             'username': _get_env('GEAR_CISCO_PSIRT_USERNAME'),
+#             'password': _get_env('GEAR_CISCO_PSIRT_PASSWORD', decode=True),
+#         },
+#         'eox' :{
+#             'username': _get_env('GEAR_CISCO_EOX_USERNAME'),
+#             'password': _get_env('GEAR_CISCO_EOX_PASSWORD', decode=True),
+#         },
+#     },
+#     'uptimerobot': {
+#         'api': {
+#             'client_id': _get_env('GEAR_UPTIMEROBOT_USERNAME'),
+#             'key': _get_env('GEAR_UPTIMEROBOT_KEY', decode=True),
+#         }
+#     }
+# }
 
-environment_configuration = clean_config(environment_configuration)
-configuration.update(environment_configuration)
+# environment_configuration = clean_config(environment_configuration)
+# configuration.update(environment_configuration)
 
 configuration['log']['level'] = getattr(logging, configuration['log']['level'].upper())
 
