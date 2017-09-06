@@ -17,6 +17,7 @@ from gear.commands.collections import pip as pip_collection
 from gear.commands.collections import packages as packages_collection
 from gear.commands.collections import monitors as monitors_collection
 from gear.commands.collections import cisco as cisco_collection
+from gear.commands.collections import config as config_collection
 from gear.commands.collections.cisco import eox as cisco_eox_collection
 from gear.commands.collections.cisco import psirt as cisco_psirt_collection
 from gear.utils.log_setup import log_setup
@@ -34,7 +35,12 @@ def directories(ctx, folder='.'):
 
 
 namespace = Collection('gear')
-# namespace.add_task(env, 'env')
+cisco_collection = Collection()
+namespace.add_collection(cisco_collection, name='cisco')
+
+namespace.add_collection(config_collection, name='config')
+cisco_collection.add_collection(cisco_eox_collection, name='eox')
+cisco_collection.add_collection(cisco_psirt_collection, name='advisories')
 namespace.add_collection(git_collection, name='git')
 namespace.add_collection(scp_collection, name='scp')
 namespace.add_collection(ssh_collection, name='ssh')
@@ -48,10 +54,6 @@ namespace.add_collection(pip_collection, name='pip')
 namespace.add_collection(packages_collection, name='packages')
 namespace.add_collection(monitors_collection, name='monitors')
 
-cisco_collection = Collection()
-namespace.add_collection(cisco_collection, name='cisco')
-cisco_collection.add_collection(cisco_eox_collection, name='eox')
-cisco_collection.add_collection(cisco_psirt_collection, name='advisories')
 
 namespace.configure({
     # https://github.com/pyinvoke/invoke/issues/345
@@ -82,6 +84,6 @@ class MyProgram(Program):
 
 program = MyProgram(
     namespace=namespace,
-    binary='gearup',
+    binary='gear',
     version='0.1.0',
 )

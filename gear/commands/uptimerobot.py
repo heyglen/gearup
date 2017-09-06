@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import ijson
+import copy
 import logging
 try:
     from StringIO import StringIO
@@ -22,58 +23,73 @@ logger = logging.getLogger(__name__)
 
 
 class UpTimeRobot(object):
-    _url = 'https://api.uptimerobot.com'
+    _url = 'https://api.uptimerobot.com/v2'
     _methods = {
         'get': 'getMonitors',
     }
+    _default_headers = {
+        'content-type': "application/x-www-form-urlencoded",
+        'cache-control': "no-cache"
+    }
+    _base_data = {
+        'api_key': configuration.uptimerobot.api.key,
+        'format': 'json',
+    }
+
+    @classmethod
+    def _get_data(cls, extra=None):
+        entries = list()
+        extra = extra or dict()
+        for key, value in cls._base_data.items():
+            entries.append('='.join([key, str(value)]))
+        for key, value in extra.items():
+            entries.append('='.join([key, str(value)]))
+        return '&'.join(entries)
 
     @classmethod
     def _clean_response_data(cls, data):
         return data.replace(u'jsonUptimeRobotApi(', u'').rstrip(u')')
 
     @classmethod
-    def _get_params(cls, cli, monitor_id=None):
-        params = {
-            'apiKey': configuration.uptimerobot.api.key,
-            'responseTimes': 1,
-            'showTimezone': 1,
-            'format': 'json',
-            'offset': 0,
-        }
-        if monitor_id:
-            params['monitors'] = monitor_id
-        return params
-
-    @classmethod
     def _get_response(cls, monitor_id, cli=None):
-        params = cls._get_params(cli, monitor_id)
-        response = requests.get(
+        data = cls._get_data({
+            'logs': 1,
+            'response_times': 1,
+            'monitors': monitor_id,
+        })
+        headers = cls._default_headers
+        response = requests.post(
             '{}/{}'.format(cls._url, cls._methods.get('get')),
-            params=params,
+            headers=headers,
+            data=data,
         )
         return response
 
     @classmethod
     def list(cls, cli=None):
         for monitor in cls._list_monitors(cli):
-            # import ipdb; ipdb.set_trace()
-            click.echo('{}'.format(
-                monitor.get('friendlyname'),
-                # monitor.get('id'),
-            ))
+            name = monitor.get('friendly_name')
+            monitor_id = monitor.get('id')
+            click.echo(f'{name}')
 
     @classmethod
     def _list_monitors(cls, cli=None):
         url = '{}/{}'.format(cls._url, cls._methods.get('get'))
-        params = cls._get_params(cli)
-        response = requests.get(
+        data = cls._get_data()
+        headers = cls._default_headers
+        logger.debug(f'POST {url}')
+        logger.debug(f'headers {headers}')
+        logger.debug(f'data {data}')
+        response = requests.post(
             url,
-            params=params,
+            data=data,
+            headers=headers,
         )
+        logger.debug(f'Returned: {response.text}')
         data = cls._clean_response_data(response.text)
         data = StringIO(data)
         monitors = list()
-        for monitor in ijson.items(data, 'monitors.monitor.item'):
+        for monitor in ijson.items(data, 'monitors.item'):
             monitors.append(monitor)
         return monitors
 
@@ -82,29 +98,31 @@ class UpTimeRobot(object):
         monitor_id = None
         friendly_name = None
         for monitor_object in cls._list_monitors(cli):
-            if monitor_object.get('friendlyname') == monitor or monitor_object.get('id') == monitor:
+            if monitor_object.get('friendly_name') == monitor or monitor_object.get('id') == monitor:
                 monitor_id = monitor_object.get('id')
-                friendly_name = monitor_object.get('friendlyname')
+                friendly_name = monitor_object.get('friendly_name')
                 break
         return monitor_id, friendly_name
 
     @classmethod
     def _graph(cls, monitor, cli=None, file_name=None):
-        monitor_id, friendlyname = cls._get_monitor_id(monitor, cli=cli)
+        monitor_id, friendly_name = cls._get_monitor_id(monitor, cli=cli)
         response = cls._get_response(monitor_id, cli=cli)
         data = cls._clean_response_data(response.text)
         data = StringIO(data)
 
         dates = list()
         values = list()
-        for measure in ijson.items(data, 'monitors.monitor.item.responsetime.item'):
+        for measure in ijson.items(data, 'monitors.item.response_times.item'):
             dates.append(measure.get('datetime'))
             values.append(int(measure.get('value')))
 
-        index = pnd.to_datetime(dates, dayfirst=False)
+        logger.debug(f'Response returned {len(values)} values')
+
+        index = pnd.to_datetime(dates, unit='s', origin='unix')
         series = pnd.Series(values, index=index)
         ax = series.plot()
-        ax.set_title('Response Time: {}'.format(friendlyname))
+        ax.set_title('Response Time: {}'.format(friendly_name))
         ax.set_xlabel('Time')
         fig = ax.get_figure()
         if file_name is None:

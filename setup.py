@@ -26,6 +26,7 @@ requirements = [
     'matplotlib',
     'PyYAML',
     'notify2',
+    'appdirs',
     # TODO: put package requirements here
 ]
 
