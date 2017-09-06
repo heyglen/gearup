@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from datetime import datetime
+import datetime
 
 import requests
 import oauth2 as oauth
+
+from gear.utils.configuration import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +16,10 @@ class Psirt(object):
         https://developer.cisco.com/site/PSIRT/get-started/getting-started.gsp
         https://api.apis.guru/v2/specs/cisco.com/0.0.3/swagger.yaml
     """
-    _advisory_standard = u'cvrf'  # 'oval'
-    _token_url = u'https://cloudsso.cisco.com/as/token.oauth2?' \
-                 u'grant_type=client_credentials&client_id={}&client_secret={}'
-    _base_url = u'http://api.cisco.com/security/advisories'
+    _advisory_standard = 'cvrf'  # 'oval'
+    _token_url = 'https://cloudsso.cisco.com/as/token.oauth2?' \
+                 'grant_type=client_credentials&client_id={}&client_secret={}'
+    _base_url = 'http://api.cisco.com/security/advisories'
 
     def __init__(self):
         self._session = requests.Session()
@@ -31,10 +33,16 @@ class Psirt(object):
             logger.debug('Building request headers')
             access_token = self._get_access_token()
             self._headers = {
-                'Accept': u'application/json',
-                'Authorization': u'Bearer {}'.format(access_token)
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {access_token}'
             }
         return self._headers
+
+    def _buld_parameters(self, params):
+        entries = list()
+        for key, value in params.items():
+            entries.append('='.join([key, str(value)]))
+        return '&'.join(entries)
 
     def _get_access_token(self):
         if not hasattr(self, '_access_token'):
@@ -59,7 +67,10 @@ class Psirt(object):
         # https://developer.cisco.com/site/PSIRT/get-started/getting-started.gsp
 
         headers = self._get_headers()
+        logger.debug(f'GET {url}')
+        logger.debug(f'headers: {headers}')
         response = self._session.get(url, headers=headers)
+        logger.debug(f'Response: {response.text}')
         import ipdb; ipdb.set_trace()
         return response.json()
 
@@ -67,15 +78,15 @@ class Psirt(object):
         advisory = None
         if item.startswith('CVE'):
             logger.debug('Getting CVE advisory {}'.format(item))
-            url = self._build_url(u'cve/{}'.format(item))
+            url = self._build_url('cve/{}'.format(item))
             advisory = self._get(url).get('advisories')
         else:
             logger.debug('Getting advisory client_id {}'.format(item))
-            url = self._build_url(u'advisory/{}'.format(item))
+            url = self._build_url('advisory/{}'.format(item))
             advisory = self._get(url).get('advisories')
         return advisory
 
-    def list(self, year=None, critical=None, high=None, medium=None, low=None):
+    def list(self, critical=True, high=True, medium=None, low=None):
         advisories = list()
         levels = {
             'critical': critical,
@@ -83,19 +94,21 @@ class Psirt(object):
             'medium': medium,
             'low': low,
         }
-        if year is None:
-            match = False
-            for level, value in levels.items():
-                if value:
-                    match = True
-                    logger.debug(u'Getting {} advisories'.format(level))
-                    url = self._build_url(u'severity/{}'.format(level))
-                    advisories = advisories + self._get(url).get('advisories')
-            if not match:
-                year = datetime.now().year
-        if year:
-            logger.debug('Getting advisories for {}'.format(year))
-            url = self._build_url(u'year/{}'.format(year))
-            data = self._get(url)
-            advisories = data.get('advisories')
+
+        now = datetime.datetime.now()
+        week_ago = now - datetime.timedelta(days=7)
+        start_date = f'{week_ago.year}-{week_ago.month}-{week_ago.day}'
+        end_date = f'{now.year}-{now.month}-{now.day}'
+
+        for level, value in levels.items():
+            if value:
+                logger.debug(f'Getting {level} advisories since {start_date}')
+                params = self._buld_parameters({
+                    'startDate': start_date,
+                    'endDate': end_date,
+                    'pageIndex': 1,
+                    'pageSize': 5,
+                })
+                url = self._build_url(f'severity/{level}?{params}')
+                advisories = advisories + self._get(url).get('advisories')
         return advisories

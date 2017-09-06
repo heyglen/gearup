@@ -40,7 +40,7 @@ namespace.add_collection(cisco_collection, name='cisco')
 
 namespace.add_collection(config_collection, name='config')
 cisco_collection.add_collection(cisco_eox_collection, name='eox')
-cisco_collection.add_collection(cisco_psirt_collection, name='advisories')
+cisco_collection.add_collection(cisco_psirt_collection, name='psirt')
 namespace.add_collection(git_collection, name='git')
 namespace.add_collection(scp_collection, name='scp')
 namespace.add_collection(ssh_collection, name='ssh')
