@@ -24,7 +24,7 @@ requirements = [
     'pandas',
     'colorlog',
     'matplotlib',
-    'PyYAML',
+    'pyyaml',
     'notify2',
     'appdirs',
     # TODO: put package requirements here

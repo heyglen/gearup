@@ -54,7 +54,7 @@ def _get_env(name, cls_type=str, decode=False):
     if value and cls_type is not None:
         value = cls_type(value)
     if isinstance(value, str) and decode:
-        value = base64.b64decode(value)
+        value = base64.b64decode(value).decode('utf8')
     if value is not None:
         if decode:
             logger.debug(f'Loaded environment vairable {name}')
