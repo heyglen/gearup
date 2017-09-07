@@ -20,18 +20,17 @@ default_configuration = {
         'level': 'debug',
     },
     'cisco': {
-        'psirt' :{
+        'psirt': {
             'username': None,
             'password': None,
         },
-        'eox' :{
+        'eox': {
             'username': None,
             'password': None,
         },
     },
     'uptimerobot': {
         'api': {
-            'client_id': None,
             'key': None,
         }
     }
@@ -87,7 +86,6 @@ def clean_config(config):
 #     },
 #     'uptimerobot': {
 #         'api': {
-#             'client_id': _get_env('GEAR_UPTIMEROBOT_USERNAME'),
 #             'key': _get_env('GEAR_UPTIMEROBOT_KEY', decode=True),
 #         }
 #     }
