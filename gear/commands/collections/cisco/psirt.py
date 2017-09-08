@@ -11,10 +11,10 @@ from gear.commands.cisco.psirt import Psirt
 logger = logging.getLogger(__name__)
 
 
-@task(default=True)
-def list(ctx, critical=True, high=True, medium=None, low=None):
+@task('list', default=True)
+def _list(ctx, critical=True, high=True, medium=None, low=None):
     for advisory in Psirt().list(critical=critical, high=high, medium=medium, low=low):
-        click.echo(advisory)
+        click.echo(f'{advisory.advisoryId}: {advisory.advisoryTitle}')
 
 
 @task
