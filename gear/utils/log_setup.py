@@ -2,6 +2,8 @@ import logging
 
 import colorlog
 
+from gear.utils.configuration import configuration
+
 
 verbose_formatter = colorlog.ColoredFormatter(
     "%(log_color)s%(levelname)-2s%(reset)s %(name)-3s %(white)s%(message)s",
@@ -22,7 +24,7 @@ verbose_formatter = colorlog.ColoredFormatter(
 def log_setup(name=None):
     name = name if name is not None else 'ucsd'
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(configuration.log.level)
     logger.handlers = []
     if not logger.handlers:
         handler = logging.StreamHandler()

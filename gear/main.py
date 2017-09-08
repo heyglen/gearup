@@ -52,7 +52,7 @@ namespace.add_collection(files_collection, name='file')
 namespace.add_collection(update_collection, name='update')
 namespace.add_collection(pip_collection, name='pip')
 namespace.add_collection(packages_collection, name='packages')
-namespace.add_collection(monitors_collection, name='monitors')
+namespace.add_collection(monitors_collection, name='monitor')
 
 
 namespace.configure({
