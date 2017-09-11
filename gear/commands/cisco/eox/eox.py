@@ -1,343 +1,155 @@
-"""
+# https://developer.cisco.com/site/support-apis/docs/#eox
 
-Original code from Henry Ölsner
-https://github.com/hoelsner/product-database
-
-"""
-
-import datetime
-import json
 import logging
+import datetime
 
 import requests
+# import oauth2 as oauth
 
 from gear.utils.configuration import configuration
-from gear.commands.cisco.eox.exceptions import *
+from gear.utils.dot_dict import DotDict
 
 logger = logging.getLogger(__name__)
 
 
-class BaseCiscoApiConsole:
+EOX_TYPES = {
+    'announce': 'EO_EXT_ANNOUNCE_DATE',
+    'sale': 'EO_SALES_DATE',
+    'failure_analysis': 'EO_FAIL_ANALYSIS_DATE',
+    'service_attachment': 'EO_SVC_ATTACH_DATE',
+    'software_maintenance': 'EO_SW_MAINTENANCE_DATE',
+    'security_vulnerability': 'EO_SECURITY_VUL_SUPPORT_DATE',
+    'contract_renewal': 'EO_CONTRACT_RENEW_DATE',
+    'last_support': 'EO_LAST_SUPPORT_DATE',
+    'update_timestamp': 'UPDATE_TIMESTAMP (default)',
+}
+
+
+class Eox(object):
     """
-    Basic Cisco API implementation
-
-    This class implements the OAuth2 authentication process, get a token from the central authentication directory and
-    caches the resulting access token.
+        https://developer.cisco.com/site/support-apis/docs/#eox/SWReleaseStringType
     """
-    AUTH_TOKEN_CACHE_KEY = "cisco_api_auth_token"
-    AUTHENTICATION_URL = "https://cloudsso.cisco.com/as/token.oauth2"
+    _token_url = 'https://cloudsso.cisco.com/as/token.oauth2'
+    _base_url = 'https://api.cisco.com/supporttools/eox/rest/5/'
+    _request_type = {
+        'date': 'EOXByDates',
+        'product': 'EOXByProductID',
+        'product': 'EOXByProductID',
+        'serial': 'EOXBySerialNumber',
+        'software': 'EOXBySWReleaseString',
+    }
+    _base_params = {
+        'responseencoding': 'json',
+    }
+    # https://developer.cisco.com/site/support-apis/docs/#eox/SWReleaseStringType
+    _os_types = [
+        'ACNS',
+        'ACSW',
+        'ALTIGAOS',
+        'ASA',
+        'ASYNCOS',
+        'CATOS',
+        'CDS-IS',
+        'CDS-TV',
+        'CDS-VN',
+        'CDS-VQE',
+        'CTS',
+        'ECDS',
+        'FWSM-OS',
+        'GSS',
+        'IOS',
+        'IOS XR',
+        'IOS-XE',
+        'IPS',
+        'NAM',
+        'NX-OS',
+        'ONS',
+        'PIXOS',
+        'SAN-OS',
+        'STAR OS',
+        'TC',
+        'TE',
+        'UCS NX-OS',
+        'VCS',
+        'VDS-IS',
+        'WAAS',
+        'WANSW BPX/IGX/IPX',
+        'WEBNS',
+        'WLC',
+        'WLSE-OS',
+        'XC',
+    ]
 
-    client_id = None
-    client_secret = None
+    def __init__(self):
+        self._session = requests.Session()
 
-    current_access_token = None
-    http_auth_header = None
-    token_expire_datetime = datetime.datetime.now()
+    def _url_page_index(self, request_type):
+        base_url = self._base_url
+        request_type = self._request_type[request_type]
+        base_url = f'{base_url}/{request_type}'
+        for page_index in range(50):
+            yield f'{base_url}/{page_index}'
 
-    def __repr__(self):
-        return {
-            "cliend_id": self.client_id,
-            "http_auth_header": self.http_auth_header,
-            "current_access_token": self.current_access_token
-        }
+    def _date_urls(self, start_date, end_date):
+        for page_index_url in self._url_page_index('date'):
+            yield f'{page_index_url}/{start_date}/{end_date}'
 
-    def __save_cached_temp_token__(self, timeout_seconds):
-        logger.debug("save token to cache")
+    def _get_headers(self):
+        if not hasattr(self, '_headers'):
+            logger.debug('Building request headers')
+            access_token = self._get_access_token()
+            self._headers = {
+                'Accept': 'application/json',
+                'Authorization': f'Bearer {access_token}'
+            }
+        return self._headers
 
-        temp_auth_token = dict()
-        temp_auth_token['http_auth_header'] = self.http_auth_header
-        temp_auth_token['expire_datetime'] = self.token_expire_datetime.strftime("%Y-%m-%d %H:%M:%S.%f")
+    def _get_access_token(self):
+        if not hasattr(self, '_access_token'):
+            logger.debug('Authenticating')
+            params = {
+                'client_id': configuration.cisco.psirt.username,
+                'client_secret': configuration.cisco.psirt.password
+            }
+            data = {'grant_type': 'client_credentials'}
 
-        logger.debug("temporary token saved")
+            # consumer = oauth.Consumer(key=username, secret=password)
+            # request_token_url = self._token_url.format(username, password)
+            # oauth.Client(consumer)
 
-    def __load_cached_temp_token__(self):
-        logger.debug("load cached temp token")
-
-        try:
-            cached_auth_token = None
-            if not cached_auth_token:
-                self.drop_cached_token()        # clean instance
-                return False
-            temp_auth_token = json.loads(cached_auth_token)
-
-            self.http_auth_header = temp_auth_token['http_auth_header']
-            self.token_expire_datetime = datetime.datetime.strptime(
-                temp_auth_token['expire_datetime'],
-                "%Y-%m-%d %H:%M:%S.%f"
+            response = self._session.post(
+                self._token_url,
+                params=params,
+                data=data,
             )
-            return True
+            response.raise_for_status()
+            logger.debug(response.text.strip())
+            self._access_token = response.json()['access_token']
+            logger.debug('Access Token Retrieved')
+        return self._access_token
 
-        except Exception as e:  # catch any exception
-            logger.debug("cannot load cached token: register new token")
-            logger.exception(str(e))
-            return False
+    def _get(self, url):
+        headers = self._get_headers()
+        logger.debug(f'GET {url}')
+        logger.debug(f'headers: {headers}')
+        response = self._session.get(url, headers=headers)
+        logger.debug(f'Response: {response.text}')
+        return response.json()
 
-    def __check_response_for_errors__(self, respone):
-        """check for common errors on the API endpoints"""
-        if respone.status_code == 401:
-            logger.error("cannot claim access token, Invalid client or client credentials")
-            raise InvalidClientCredentialsException("Invalid client or client credentials")
-
-        if respone.text == "<h1>Not Authorized</h1>":
-            logger.error("cannot claim access token, authorization failed")
-            raise AuthorizationFailedException("User authorization failed")
-
-        elif respone.text == "<h1>Developer Inactive</h1>":
-            logger.error("cannot claim access token, developer inactive")
-            raise AuthorizationFailedException("Insufficient Permissions on API endpoint")
-
-        elif respone.text == "<h1>Gateway Timeout</h1>":
-            logger.error("cannot claim access token, Gateway timeout")
-            raise AuthorizationFailedException("API endpoint temporary unreachable")
-
-    def load_client_credentials(self):
-        logger.debug("load client credentials from configuration")
-        self.client_id = configuration.cisco.eox.username
-        self.client_secret = configuration.cisco.eox.password
-
-    def get_client_credentials(self):
-        if self.client_id is None:
-            self.load_client_credentials()
-
-        return {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret
-        }
-
-    def create_temporary_access_token(self, force_new_token=False):
-        if self.client_id is None:
-            raise CredentialsNotFoundException("Client credentials not defined/found")
-
-        authz_header = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "grant_type": "client_credentials"
-        }
-
-        # try to load the cached token
-        if not self.__load_cached_temp_token__():
-            # check if previous token expired
-            if self.__is_cached_token_valid__():
-                logger.debug("cached token valid, continue with it")
-
-            else:
-                logger.debug("cached token invalid or not existing (force:%s)" % force_new_token)
-                try:
-                    response = requests.post(self.AUTHENTICATION_URL, params=authz_header)
-
-                except Exception as ex:
-                    logger.error("cannot contact authentication server at %s" % self.AUTHENTICATION_URL, exc_info=True)
-                    raise ConnectionFailedException("cannot contact authentication server")
-
-                self.__check_response_for_errors__(response)
-                try:
-                    jdata = response.json()
-
-                except:
-                    logger.error("unexpected response from API endpoint (malformed JSON content)")
-                    raise CiscoApiCallFailed("unexpected content from API endpoint")
-
-                self.current_access_token = jdata
-
-                # set expire date
-                expire_offset = datetime.timedelta(seconds=self.current_access_token['expires_in'])
-                self.token_expire_datetime = datetime.datetime.now() + expire_offset
-
-                self.http_auth_header = {
-                    # we will just work with JSON results
-                    "Accept": "application/json",
-                    "Authorization": "%s %s" % (self.current_access_token['token_type'],
-                                                self.current_access_token['access_token']),
-                }
-
-                # dump token to temp file
-                self.__save_cached_temp_token__(self.current_access_token['expires_in'])
-
-    def drop_cached_token(self):
-        self.current_access_token = None
-        self.http_auth_header = None
-        self.token_expire_datetime = None
-
-    def __is_cached_token_valid__(self):
-        result = False
-        if self.token_expire_datetime is not None:
-            logger.debug("check cached token state: %s <= %s" % (datetime.datetime.now(),
-                                                                 self.token_expire_datetime))
-            result = datetime.datetime.now() <= self.token_expire_datetime
-
-        return result if result else False
-
-    def is_ready_for_use(self):
-        """
-        verify the state of the class
-        :return:
-        """
-        if self.client_id is None:
-            return False
-
-        if self.http_auth_header is None:
-            # check that a valid token exists, renew if required
-            if not self.__load_cached_temp_token__():
-                self.create_temporary_access_token(force_new_token=True)
-
-        elif not self.__is_cached_token_valid__():
-            logger.debug("access token expired, claim new one")
-            self.create_temporary_access_token(force_new_token=True)
-
-        return True
-
-    def get_request(self, url):
-        try:
-            response = requests.get(url, headers=self.http_auth_header)
-
-        except Exception as ex:
-            logger.error("cannot contact API endpoint at %s" % url, exc_info=True)
-            raise ConnectionFailedException("cannot contact API endpoint at %s" % url)
-
-        self.__check_response_for_errors__(response)
-        try:
-            jdata = response.json()
-
-        except:
-            logger.debug(response.text)
-            logger.error("unexpected response from API endpoint (malformed JSON content)")
-            raise CiscoApiCallFailed("unexpected content from API endpoint")
-
-        return jdata
-
-
-class CiscoHelloApi(BaseCiscoApiConsole):
-    """
-    Implementation of the Cisco Hello API endpoint (only for testing)
-    """
-    HELLO_API_URL = "https://api.cisco.com/hello"
-
-    def hello_api_call(self):
-        if self.is_ready_for_use():
-            return self.get_request(self.HELLO_API_URL)
-
-        raise CiscoApiCallFailed("Client not ready (credentials or token missing)")
-
-
-class CiscoEoxApi(BaseCiscoApiConsole):
-    """
-    Implementation for the Cisco EoX API Version 5 endpoint
-    """
-    EOX_API_URL = "https://api.cisco.com/supporttools/eox/rest/5/EOXByProductID/%d/%s"
-
-    last_json_result = None
-    last_page_call = 0
-
-    def query_product(self, product_id, page=1):
-        """
-        :param product_id: To enhance search capabilities, the Cisco Support Tools allows wildcards with the productIDs
-        parameter. A minimum of 3 characters is required. For example, only the following inputs are valid: *VPN*,
-        *VPN, VPN*, and VPN. Using wildcards can result in multiple PIDs in the output.
-        :param page: page, that should be called
-        :return:
-        """
-        logger.debug("call to Cisco EoX API endpoint with '%s'" % product_id)
-        if self.is_ready_for_use():
-            url = self.EOX_API_URL % (page, product_id)
-            self.last_json_result = self.get_request(url)
-            self.last_page_call = page
-
-            # check for API error
-            if self.has_api_error():
-                # if the API error message only states that no EoX information are available, just return nothing
-                if not self.get_api_error_message().startswith("EOX information does not exist for the following "
-                                                               "product ID(s):"):
-                    msg = "Cisco EoX API error: %s" % self.get_api_error_message()
-                    logger.fatal(msg)
-                    raise CiscoApiCallFailed(msg)
-
-            return self.last_json_result
-
-        raise CiscoApiCallFailed("Client not ready (credentials or token missing)")
-
-    def amount_of_pages(self):
-        if self.last_json_result is None:
-            return 0
-
-        return int(self.last_json_result['PaginationResponseRecord']['LastIndex'])
-
-    def amount_of_total_records(self):
-        if self.last_json_result is None:
-            return 0
-
-        if int(self.last_json_result['PaginationResponseRecord']['TotalRecords']) == 1:
-            return self.get_page_record_count()
-
-        return int(self.last_json_result['PaginationResponseRecord']['TotalRecords'])
-
-    def get_current_page(self):
-        if self.last_json_result is None:
-            return 0
-
-        return int(self.last_json_result['PaginationResponseRecord']['PageIndex'])
-
-    def get_page_record_count(self):
-        if self.last_json_result is None:
-            return 0
-
-        if len(self.last_json_result['EOXRecord']) == 1:
-            if "EOXError" in self.last_json_result['EOXRecord'][0].keys():
-                return 0
-
-            else:
-                return 1
-
+    def get(self, item):
+        advisory = None
+        if item.startswith('CVE'):
+            logger.debug('Getting CVE advisory {}'.format(item))
+            url = self._build_url('cve/{}'.format(item))
+            advisory = self._get(url).get('advisories')
         else:
-            return len(self.last_json_result['EOXRecord'])
+            logger.debug('Getting advisory client_id {}'.format(item))
+            url = self._build_url('advisory/{}'.format(item))
+            advisory = self._get(url).get('advisories')
+        return advisory
 
-    def has_api_error(self):
-        """
-        identifies API errors
-        :return:
-        """
-        if self.has_error(self.last_json_result["EOXRecord"][0]):
-            return True
-
-        return False
-
-    def get_api_error_message(self):
-        """
-        returns API error message, if existing in the last query
-        :return:
-        """
-        if self.has_error(self.last_json_result["EOXRecord"][0]):
-            msg = "%s (%s)" % (self.get_error_description(self.last_json_result["EOXRecord"][0]),
-                               self.last_json_result["EOXRecord"][0]['EOXError']['ErrorID'])
-            return msg
-
-        return "no error"
-
-    @staticmethod
-    def has_error(record):
-        if "EOXError" in record.keys():
-            return True
-
-        else:
-            return False
-
-    @staticmethod
-    def get_error_description(record):
-        if "EOXError" in record.keys():
-            return record['EOXError']['ErrorDescription']
-
-        else:
-            return ""
-
-    def get_eox_records(self):
-        """
-        returns a list with all records from the current page.
-        The record format for API version 4 is the following:
-        :return:
-        """
-        if self.last_json_result is None:
-            return []
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("results from Cisco EoX database: %s" % json.dumps(self.last_json_result, indent=4))
-
-        return self.last_json_result['EOXRecord']
+    def by_date(self, start_date, end_date):
+        for unvalidated_date in [start_date, end_date]:
+            datetime.datetime.strptime(unvalidated_date, '%Y-%m-%d')
+        for date_url in self._date_urls():
+            self._session.get(date_url)
