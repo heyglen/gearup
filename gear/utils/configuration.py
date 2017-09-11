@@ -36,18 +36,6 @@ default_configuration = {
     }
 }
 
-configuration = copy.deepcopy(default_configuration)
-
-configuration_directory = pathlib.Path(appdirs.user_config_dir(MODULE_NAME, APP_AUTHOR))
-configuration_path = configuration_directory / 'configuration.yml'
-
-if configuration_directory.is_dir():
-    if configuration_path.is_file():
-        with open(configuration_path) as f:
-            loaded_config = yaml.safe_load(f) or dict()
-            configuration.update(loaded_config)
-            logger.debug(f'Loaded configuration file {configuration_path}')
-
 def _get_env(name, cls_type=str, decode=False):
     value = os.environ.get(name)
     if value and cls_type is not None:
@@ -71,6 +59,19 @@ def clean_config(config):
         elif value is not None:
             new_dict[key] = value
     return new_dict
+
+configuration = copy.deepcopy(default_configuration)
+
+configuration_directory = pathlib.Path(appdirs.user_config_dir(MODULE_NAME, APP_AUTHOR))
+configuration_path = configuration_directory / 'configuration.yml'
+
+if configuration_directory.is_dir():
+    if configuration_path.is_file():
+        with open(configuration_path) as f:
+            loaded_config = yaml.safe_load(f) or dict()
+            loaded_config = clean_config(loaded_config)
+            configuration.update(loaded_config)
+            logger.debug(f'Loaded configuration file {configuration_path}')
 
 
 # environment_configuration = {

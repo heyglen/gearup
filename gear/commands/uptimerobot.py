@@ -13,7 +13,6 @@ import requests
 import pandas as pnd
 import matplotlib.pyplot as plt
 
-
 from gear.utils.configuration import configuration
 
 plt.style.use('fivethirtyeight')
