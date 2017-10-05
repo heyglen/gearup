@@ -27,7 +27,7 @@ def git_flow_release_start(ctx, version):
         logger.debug('Release {} already exists'.format(version))
 
 
-@task(name='finish')
+@task(name='finish', aliases=['done'])
 def git_flow_release_finish(ctx, version):
     command = 'git flow release finish {0} -m {0}'.format(version)
     logger.debug(command)
